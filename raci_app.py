@@ -93,22 +93,10 @@ if type_projet:
     # Résultat : Matrice RACI
     # ----------------------------
     if assignations:
-        st.header("📊 Matrice RACI générée
-        • R – Responsible (Responsable)
-La personne ou l’équipe qui réalise réellement la tâche. Elle exécute le travail et s’assure que la tâche est faite correctement.
-Exemple : pour câbler un système, l’ingénieur élec est R.
-• A – Accountable (Autorité / Responsable ultime)
-La personne qui a la responsabilité finale que la tâche soit terminée et correcte. C’est celle qui prend les décisions finales et peut être tenue responsable en cas de problème.
-Il y a toujours une seule personne A par tâche.
-Exemple : le chef de projet qui valide le plan de câblage.
-• C – Consulted (Consulté)
-Les personnes ou équipes qui donnent des avis, expertises ou informations avant ou pendant la réalisation. Elles ne font pas le travail mais leur opinion est importante.
-Exemple : l’architecte ou l’intégration système peut être C pour un chemin de câblage.
-• I – Informed (Informé)
-Ceux qui doivent être tenus au courant de l’avancement ou du résultat, mais qui ne participent pas directement ni ne prennent de décisions.
-Exemple : certaines équipes impactées par le câblage mais qui ne participent pas à sa définition.")
+        st.header("📊 Matrice RACI générée")
         df = pd.DataFrame(assignations, columns=["Rôle", "Action"])
         df = df.groupby("Rôle")["Action"].apply(lambda x: "/".join(sorted(set(x)))).reset_index()
         st.dataframe(df)
     else:
         st.info("👉 Sélectionne des réponses pour générer la matrice RACI.")
+
