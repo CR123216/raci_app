@@ -1,85 +1,114 @@
 import streamlit as st
 import pandas as pd
 
-st.set_page_config(page_title="Générateur Matrice RACI", layout="wide")
-st.title("Générateur de Matrice RACI")
-st.write("Répondez aux questions ci-dessous pour générer la matrice RACI pour votre tâche.")
+st.set_page_config(page_title="Arbre de décision RACI", layout="centered")
+st.title("🌳 Arbre de décision RACI")
 
-# Les 8 rôles distincts
-roles = [
-    "Chef de projet",
-    "Architecte",
-    "Perf système/Quantum Registre",
-    "Intégration système",
-    "Qualité",
-    "Méca",
-    "Élec",
-    "Optique"
-]
+# ----------------------------
+# Étape 1 – Type de projet
+# ----------------------------
+st.header("Étape 1 – Type de projet")
+type_projet = None
 
-# Toutes les questions et assignations (simplification pour ton code)
-regles_raci = [
-    # 1. Gouvernance et pilotage
-    {"question": "La tâche est-elle explicitement mentionnée dans le planning global du projet ?", "assignations": {"Chef de projet": "A"}},
-    {"question": "Peut-on avancer sur le prototype si cette tâche n’est pas faite ?", "assignations": {"Chef de projet": "A", "Architecte": "I"}},
-    {"question": "Cette tâche doit-elle être validée par une autre équipe avant de continuer ?", "assignations": {"Chef de projet": "A", "Intégration système": "R"}},
-    {"question": "Cette tâche doit-elle être validée ou vérifiée par la direction avant de continuer ?", "assignations": {"Chef de projet": "A", "Perf système/Quantum Registre": "R"}},
-    {"question": "Si cette tâche n’est pas terminée à temps, le projet prendra-t-il du retard ?", "assignations": {"Chef de projet": "A"}},
-    {"question": "La tâche nécessite-t-elle une coordination multi-équipes ?", "assignations": {"Chef de projet": "A", "Architecte": "C", "Intégration système": "C"}},
-    {"question": "La tâche engage-t-elle un budget, une ressource critique ou un changement de planning ?", "assignations": {"Chef de projet": "A"}},
-    
-    # 2. Architecture et design système
-    {"question": "La tâche modifie-t-elle la conception globale du système ?", "assignations": {"Architecte": "A", "Intégration système": "C"}},
-    {"question": "La tâche impacte-t-elle la roadmap technologique ?", "assignations": {"Architecte": "A", "Intégration système": "C", "Perf système/Quantum Registre": "C"}},
-    {"question": "La tâche nécessite-t-elle de définir de nouvelles spécifications système ?", "assignations": {"Architecte": "R", "Chef de projet": "I", "Intégration système": "C"}},
-    
-    # 3. Intégration système
-    {"question": "La tâche consiste-t-elle à assembler ou mettre en place un sous-système ?", "assignations": {"Intégration système": "R"}},
-    {"question": "Vérification de l’intégration des modules métiers ?", "assignations": {"Intégration système": "R", "Qualité": "C"}},
-    {"question": "La tâche implique-t-elle une manipulation connue <30min ?", "assignations": {"Intégration système": "I"}},
-    {"question": "Préparer un environnement de test système ?", "assignations": {"Intégration système": "R", "Perf système/Quantum Registre": "C"}},
-    
-    # 4. Performance système
-    {"question": "Mesurer ou caractériser la performance du système ?", "assignations": {"Perf système/Quantum Registre": "R"}},
-    {"question": "Définir les métriques de performance ?", "assignations": {"Perf système/Quantum Registre": "A", "Architecte": "C"}},
-    {"question": "Identifier et analyser les goulets d’étranglement ?", "assignations": {"Perf système/Quantum Registre": "R", "Chef de projet": "I"}},
-    
-    # 5. Métiers techniques
-    {"question": "Conception ou modification mécanique ?", "assignations": {"Méca": "R", "Architecte": "C", "Intégration système": "I"}},
-    {"question": "Conception ou correction électronique ?", "assignations": {"Élec": "R", "Intégration système": "I", "Qualité": "C"}},
-    {"question": "Alignement ou calibration optique ?", "assignations": {"Optique": "R", "Perf système/Quantum Registre": "C", "Intégration système": "I"}},
-    {"question": "Exigence normative ou traçabilité ?", "assignations": {"Qualité": "A"}},
-    
-    # 6. Quantum Registre
-    {"question": "Définir de nouveaux patterns de piégeage ?", "assignations": {"Perf système/Quantum Registre": "R", "Architecte": "I"}},
-    {"question": "Exécuter des séquences de test atomiques ?", "assignations": {"Perf système/Quantum Registre": "R", "Perf système/Quantum Registre": "C"}},
-    {"question": "Vérifier les patterns respectent les contraintes ?", "assignations": {"Perf système/Quantum Registre": "C", "Architecte": "A"}},
-    
-    # 7. Contraintes et exceptions
-    {"question": "Résolution rapide d’un problème connu <30min ?", "assignations": {"Intégration système": "I"}},
-    {"question": "Tâche exploratoire (R&D) ?", "assignations": {"Architecte": "A", "Perf système/Quantum Registre": "C"}},
-    {"question": "Impacte la disponibilité du banc ou cryostat ?", "assignations": {"Intégration système": "A", "Chef de projet": "I"}}
-]
+if st.radio("Est-ce un projet Lab (investiguer un concept en setup de labo) ?", ["Oui", "Non"]) == "Oui":
+    type_projet = "Lab"
+    tech_lead = "Quantum"
+elif st.radio("Est-ce un projet POC (développer une nouvelle fonctionnalité testée sur QPU R&D) ?", ["Oui", "Non"]) == "Oui":
+    type_projet = "POC"
+    tech_lead = "Performance"
+elif st.radio("Est-ce un projet PROTO (fonctionnalité implémentée sur un produit) ?", ["Oui", "Non"]) == "Oui":
+    type_projet = "PROTO"
+    tech_lead = "Intégration"
+else:
+    st.warning("⚠️ Clarification nécessaire avec le chef de projet.")
 
-# Stockage des réponses
-matrice_data = []
+# Stockage des assignations RACI
+assignations = []
 
-for idx, q in enumerate(regles_raci):
-    reponse = st.radio(q["question"], ("Oui", "Non"), key=f"q{idx}")
-    ligne = {role: "" for role in roles}  # initialise toutes les colonnes vides
-    if reponse == "Oui":
-        for role, action in q["assignations"].items():
-            if role in roles:
-                ligne[role] = action
-    ligne["Question"] = q["question"]
-    matrice_data.append(ligne)
+if type_projet:
+    st.success(f"Projet identifié : **{type_projet}** | Tech Lead = {tech_lead}")
 
-# Création DataFrame
-df_raci = pd.DataFrame(matrice_data)
-df_raci = df_raci[["Question"] + roles]
+    # ----------------------------
+    # Étape 2 – Nature de la tâche
+    # ----------------------------
+    st.header("Étape 2 – Nature de la tâche")
 
-# Affichage
-if st.button("Afficher la matrice RACI"):
-    st.subheader("Matrice RACI compacte")
-    st.dataframe(df_raci)
+    # Bloc A – Définition amont
+    st.subheader("Bloc A – Définition amont")
+    if st.checkbox("La tâche consiste-t-elle à participer à la définition des besoins amonts ?"):
+        assignations.append((tech_lead, "A"))
+        assignations.append(("Chef de projet", "A"))
+        assignations.append(("Métiers", "C"))
 
+    if st.checkbox("La tâche implique-t-elle de prendre en compte les contraintes d’intégration ?"):
+        if type_projet == "PROTO":
+            assignations.append(("Intégration", "R"))
+        elif type_projet == "POC":
+            assignations.append(("Performance", "A"))
+        elif type_projet == "Lab":
+            assignations.append(("Quantum", "A"))
+
+    if st.checkbox("La tâche consiste-t-elle en la définition du système ou la synthèse de l’ICD ?"):
+        assignations.append((tech_lead, "R/A"))
+
+    # Bloc B – Design et stratégie de test
+    st.subheader("Bloc B – Design et stratégie de test")
+    if st.checkbox("La tâche consiste-t-elle à définir ou valider les éléments de design nécessaires à l’intégration ?"):
+        assignations.append((tech_lead, "R"))
+        assignations.append(("Métiers", "C"))
+
+    if st.checkbox("La tâche consiste-t-elle à définir la stratégie de test ?"):
+        assignations.append((tech_lead, "A"))
+        assignations.append(("Métiers", "R"))
+        assignations.append(("Autres équipes", "C"))
+
+    # Bloc C – Intégration et validation
+    st.subheader("Bloc C – Intégration et validation")
+    if st.checkbox("La tâche consiste-t-elle à intégrer le QPU (HW ou SW) ?"):
+        if type_projet == "PROTO":
+            assignations.append(("Intégration", "R"))
+        elif type_projet == "POC":
+            assignations.append(("Performance", "A"))
+        elif type_projet == "Lab":
+            assignations.append(("Quantum", "A"))
+
+    if st.checkbox("La tâche consiste-t-elle à appliquer les tests d’intégration et vérifier leur couverture ?"):
+        assignations.append((tech_lead, "R"))
+        assignations.append(("Autres équipes", "C"))
+
+    # Bloc D – Optimisation et passation
+    st.subheader("Bloc D – Optimisation et passation")
+    if st.checkbox("Après les tests systèmes, la tâche concerne-t-elle l’optimisation du système ?"):
+        assignations.append(("Performance", "A"))
+
+    if st.checkbox("La tâche consiste-t-elle à assurer la passation vers Méthodes/Production ?"):
+        if type_projet == "PROTO":
+            assignations.append(("Intégration", "R"))
+        elif type_projet == "POC":
+            assignations.append(("Performance", "C"))
+        elif type_projet == "Lab":
+            assignations.append(("Quantum", "C"))
+
+    # ----------------------------
+    # Résultat : Matrice RACI
+    # ----------------------------
+    if assignations:
+        st.header("📊 Matrice RACI générée
+        • R – Responsible (Responsable)
+La personne ou l’équipe qui réalise réellement la tâche. Elle exécute le travail et s’assure que la tâche est faite correctement.
+Exemple : pour câbler un système, l’ingénieur élec est R.
+• A – Accountable (Autorité / Responsable ultime)
+La personne qui a la responsabilité finale que la tâche soit terminée et correcte. C’est celle qui prend les décisions finales et peut être tenue responsable en cas de problème.
+Il y a toujours une seule personne A par tâche.
+Exemple : le chef de projet qui valide le plan de câblage.
+• C – Consulted (Consulté)
+Les personnes ou équipes qui donnent des avis, expertises ou informations avant ou pendant la réalisation. Elles ne font pas le travail mais leur opinion est importante.
+Exemple : l’architecte ou l’intégration système peut être C pour un chemin de câblage.
+• I – Informed (Informé)
+Ceux qui doivent être tenus au courant de l’avancement ou du résultat, mais qui ne participent pas directement ni ne prennent de décisions.
+Exemple : certaines équipes impactées par le câblage mais qui ne participent pas à sa définition.")
+        df = pd.DataFrame(assignations, columns=["Rôle", "Action"])
+        df = df.groupby("Rôle")["Action"].apply(lambda x: "/".join(sorted(set(x)))).reset_index()
+        st.dataframe(df)
+    else:
+        st.info("👉 Sélectionne des réponses pour générer la matrice RACI.")
