@@ -21,10 +21,10 @@ roles = [
 regles_raci = [
     # 1. Gouvernance et pilotage
     {"question": "La tâche est-elle explicitement mentionnée dans le planning global du projet ?", "assignations": {"Chef de projet": "A"}},
-    {"question": "La tâche est-elle une condition de passage pour un prototype ?", "assignations": {"Chef de projet": "A", "Architecte": "I"}},
-    {"question": "La tâche est-elle associée à une livraison interne ?", "assignations": {"Chef de projet": "A", "Intégration système": "R"}},
-    {"question": "La tâche est-elle un milestone formel suivi par le steering committee ?", "assignations": {"Chef de projet": "A", "Perf système/Quantum Registre": "R"}},
-    {"question": "Si la tâche échoue ou est retardée, impact direct sur le calendrier officiel ?", "assignations": {"Chef de projet": "A"}},
+    {"question": "Peut-on avancer sur le prototype si cette tâche n’est pas faite ?", "assignations": {"Chef de projet": "A", "Architecte": "I"}},
+    {"question": "Cette tâche doit-elle être validée par une autre équipe avant de continuer ?", "assignations": {"Chef de projet": "A", "Intégration système": "R"}},
+    {"question": "Cette tâche doit-elle être validée ou vérifiée par la direction avant de continuer ?", "assignations": {"Chef de projet": "A", "Perf système/Quantum Registre": "R"}},
+    {"question": "Si cette tâche n’est pas terminée à temps, le projet prendra-t-il du retard ?", "assignations": {"Chef de projet": "A"}},
     {"question": "La tâche nécessite-t-elle une coordination multi-équipes ?", "assignations": {"Chef de projet": "A", "Architecte": "C", "Intégration système": "C"}},
     {"question": "La tâche engage-t-elle un budget, une ressource critique ou un changement de planning ?", "assignations": {"Chef de projet": "A"}},
     
@@ -82,3 +82,4 @@ df_raci = df_raci[["Question"] + roles]
 if st.button("Afficher la matrice RACI"):
     st.subheader("Matrice RACI compacte")
     st.dataframe(df_raci)
+
