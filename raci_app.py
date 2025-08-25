@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 
 st.set_page_config(page_title="Arbre de décision RACI", layout="centered")
-st.title("🌳 Arbre de décision RACI")
+st.title("Arbre de décision RACI")
 
 # ----------------------------
 # Étape 1 – Type de projet
@@ -99,4 +99,3 @@ if type_projet:
         st.dataframe(df)
     else:
         st.info("👉 Sélectionne des réponses pour générer la matrice RACI.")
-
